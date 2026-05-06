@@ -1,0 +1,14 @@
+{
+  "$schema": "https://codesandbox.io/schemas/tasks.json",
+  "version": "0.1",
+  "tasks": {
+    "start": {
+      "name": "Start Server",
+      "command": "pip install -r requirements.txt && uvicorn main:app --host 0.0.0.0 --port 8000 --reload",
+      "runAtStart": true,
+      "preview": {
+        "port": 8000
+      }
+    }
+  }
+}
