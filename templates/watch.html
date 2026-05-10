@@ -419,7 +419,6 @@
         const options = selectWrapper.querySelectorAll('.custom-option');
         const iframeContainer = document.getElementById('iframe-container');
         let hls = null;
-        let errorCount = 0; // エラーカウント用変数
 
         function toggleControlMenu() {
             const menu = document.getElementById('ctrlMenu');
@@ -613,11 +612,25 @@
             clearTimeout(loadStuckTimer);
             loadStuckTimer = null;
         });
+
+        // エラー自動リロードロジック
+        let errorHistory = [];
         video.addEventListener('error', () => {
             if (currentSourceType !== 'stream') return;
             loader.style.display = 'none';
-            showNotify("読み込みエラー。再試行中...", true);
-            setTimeout(reloadVideoSource, 1000);
+            
+            const now = Date.now();
+            errorHistory.push(now);
+            // 10秒より古い履歴を削除
+            errorHistory = errorHistory.filter(time => now - time <= 10000);
+
+            if (errorHistory.length >= 2) {
+                showNotify("頻繁なエラーのため、自動リロードします...", true);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showNotify("読み込みエラー。再試行中...", true);
+                setTimeout(reloadVideoSource, 1000);
+            }
         });
 
         let isSyncing = false;
@@ -645,19 +658,10 @@
                 alertBox.classList.add("error");
                 alertIcon.className = "fas fa-exclamation-triangle";
                 alertIcon.style.color = "var(--error-color)";
-                
-                // エラーカウント加算
-                errorCount++;
-                if (errorCount >= 2) {
-                    alertText.innerText = "エラーが連続したため再読み込みします...";
-                    setTimeout(() => location.reload(), 1500);
-                }
             } else {
                 alertBox.classList.remove("error");
                 alertIcon.className = "fas fa-info-circle";
                 alertIcon.style.color = "var(--primary-color)";
-                // 正常に通知が出た場合はエラーカウントをリセット（任意）
-                if (!msg.includes("取得中")) errorCount = 0;
             }
             $(alertBox).stop(true, true).fadeIn(300).delay(3000).fadeOut(500);
         }
